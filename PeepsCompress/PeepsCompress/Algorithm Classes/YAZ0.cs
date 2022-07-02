@@ -267,13 +267,33 @@ namespace PeepsCompress
                 return compress(stringToFile, 0);
             }
         }
-        public override byte[] decompressInitialization(string path)
+
+        public override List<int> findOccurencesOfHeader(string path)
+        {
+            List<int> occurences = new List<int>();
+
+            FileStream inputFile = File.Open(path, FileMode.Open);
+            BigEndianBinaryReader br = new BigEndianBinaryReader(inputFile);
+            byte[] file = br.ReadBytes((int)inputFile.Length);
+            string yaz0File = Encoding.ASCII.GetString(file);
+            int next_offset = yaz0File.IndexOf("Yaz0", 0, StringComparison.OrdinalIgnoreCase);
+
+            while (next_offset != -1)
+            {
+                occurences.Add(next_offset);
+                next_offset = yaz0File.IndexOf("Yaz0", next_offset + 4, StringComparison.OrdinalIgnoreCase);
+            }
+            inputFile.Close();
+            return occurences;
+        }
+
+        public override byte[] decompressInitialization(string path, int startIndex)
         {
             FileStream inputFile = File.Open(path, FileMode.Open);
             BigEndianBinaryReader br = new BigEndianBinaryReader(inputFile);
             byte[] file = br.ReadBytes((int)inputFile.Length);
             string yaz0File = Encoding.ASCII.GetString(file);
-            int offset = yaz0File.IndexOf("Yaz0", StringComparison.OrdinalIgnoreCase);
+            int offset = yaz0File.IndexOf("Yaz0", startIndex, StringComparison.OrdinalIgnoreCase);
             inputFile.Position = offset;
 
             return decompress(br, offset, inputFile);

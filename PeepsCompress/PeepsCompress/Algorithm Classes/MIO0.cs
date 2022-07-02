@@ -9,14 +9,33 @@ namespace PeepsCompress
 {
     class MIO0 : SlidingWindowAlgorithm
     {
+        public override List<int> findOccurencesOfHeader(string path)
+        {
+            List<int> occurences = new List<int>();
 
-        public override byte[] decompressInitialization(string path)
+            FileStream inputFile = File.Open(path, FileMode.Open);
+            BigEndianBinaryReader br = new BigEndianBinaryReader(inputFile);
+            byte[] file = br.ReadBytes((int)inputFile.Length);
+            string mio0File = Encoding.ASCII.GetString(file);
+            int next_offset = mio0File.IndexOf("MIO0", 0);
+
+            while (next_offset != -1)
+            {
+                occurences.Add(next_offset);
+                next_offset = mio0File.IndexOf("MIO0", next_offset+4);
+            }
+            inputFile.Close();
+
+            return occurences;
+        }
+
+        public override byte[] decompressInitialization(string path, int startIndex)
         {
             FileStream inputFile = File.Open(path, FileMode.Open);
             BigEndianBinaryReader br = new BigEndianBinaryReader(inputFile);
             byte[] file = br.ReadBytes((int)inputFile.Length);
             string mio0File = Encoding.ASCII.GetString(file);
-            int offset = mio0File.IndexOf("MIO0");
+            int offset = mio0File.IndexOf("MIO0", startIndex);
             inputFile.Position = offset;
 
             //decompress(file);

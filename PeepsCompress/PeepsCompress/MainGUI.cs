@@ -2,6 +2,7 @@
 using System;
 using System.Windows.Forms;
 using System.IO;
+using System.Collections.Generic;
 
 namespace PeepsCompress
 {
@@ -113,25 +114,49 @@ namespace PeepsCompress
                 else
                 {
                     //decompress mode
-                    byte[] decompressedFile = algorithm.decompressInitialization(returnFilePath());
-                    if (decompressedFile != null)
+                    List<int> occurences = algorithm.findOccurencesOfHeader(returnFilePath());
+                    if (occurences.Count == 0)
                     {
+                        MessageBox.Show("Didn't find anything to decompress.");
+                    }
+                    else { 
+                        string original = this.Text; 
+                        
+                        int i = 0;
+                        int success = 0;
+                        int fail = 0;
                         if (saveFileDialog1.ShowDialog() == DialogResult.OK)
-                        {
-                            try
                             {
-                                using (BinaryWriter bw = new BinaryWriter(new FileStream(saveFileDialog1.FileName, FileMode.Create)))
+                            foreach (int occurence in occurences)
+                            {
+                                Application.DoEvents();
+                                i += 1;
+                                this.Text = String.Format("{0} {1}/{2}", original, i, occurences.Count);
+                                byte[] decompressedFile = algorithm.decompressInitialization(returnFilePath(), occurence);
+                                if (decompressedFile != null)
                                 {
-                                    bw.Write(decompressedFile);
-                                    MessageBox.Show("File successfully decompressed.");
+                                    try
+                                    {
+                                        string out_file = saveFileDialog1.FileName+String.Format("{0}.bin", i);
+                                        using (BinaryWriter bw = new BinaryWriter(new FileStream(out_file, FileMode.Create)))
+                                        {
+                                            bw.Write(decompressedFile);
+                                            success += 1;
+                                        }
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        fail += 1;
+                                        //MessageBox.Show(ex.Message);
+                                        //Console.WriteLine(ex.Message);
+                                    }
+
                                 }
                             }
-                            catch (Exception ex)
-                            {
-                                MessageBox.Show(ex.Message);
-                            }
-
                         }
+                        
+                        MessageBox.Show(String.Format("{0} file(s) successfully decompressed, {1} file(s) failed decompression.", success, fail));
+                        this.Text = original;
                     }
                 }
 
