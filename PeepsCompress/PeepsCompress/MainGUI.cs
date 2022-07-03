@@ -137,7 +137,12 @@ namespace PeepsCompress
                                 {
                                     try
                                     {
-                                        string out_file = saveFileDialog1.FileName+String.Format("{0}.bin", i);
+                                        string ending = System.IO.Path.GetExtension(saveFileDialog1.FileName);
+                                        if (ending.Length == 0)
+                                        {
+                                            ending = ".bin";
+                                        }
+                                        string out_file = saveFileDialog1.FileName+String.Format("{0}{1}", i, ending);
                                         using (BinaryWriter bw = new BinaryWriter(new FileStream(out_file, FileMode.Create)))
                                         {
                                             bw.Write(decompressedFile);
